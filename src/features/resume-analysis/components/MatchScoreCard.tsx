@@ -17,6 +17,14 @@ type MatchScoreCardProps = {
 
 export function MatchScoreCard({ matchScore }: MatchScoreCardProps) {
   const { overall, explanation, label } = matchScore;
+  const labelClass =
+    overall >= 80
+      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+      : overall >= 65
+      ? "border-blue-500/40 bg-blue-500/10 text-blue-300"
+      : overall >= 45
+      ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+      : "border-red-500/40 bg-red-500/10 text-red-300";
 
   return (
     <Card className="gap-0 rf-panel overflow-hidden">
@@ -27,7 +35,10 @@ export function MatchScoreCard({ matchScore }: MatchScoreCardProps) {
         </CardDescription>
         {label && (
           <div>
-            <Badge variant="outline" className="capitalize text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+            <Badge
+              variant="outline"
+              className={cn("capitalize text-xs", labelClass)}
+            >
               {label} fit
             </Badge>
           </div>
