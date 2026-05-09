@@ -1,9 +1,9 @@
 /**
- * Normalizes the raw AI response into a clean, fully-typed AnalyzeResponse.
+ * Normalizes the API response into a clean, fully-typed AnalyzeResponse.
  *
- * The AI may return partial or inconsistent data; this layer fills in safe
- * defaults and recalculates the match score deterministically so we never
- * surface a raw AI-generated score number.
+ * For AI runs, `matchScore.overall` comes from the model (JSON contract); this
+ * layer clamps it to 0–100, fills missing label/summary fields, and sanitizes
+ * the explanation text. Heuristic fallback responses are normalized the same way.
  */
 
 import type { AnalyzeResponse } from "@/types/api.types";

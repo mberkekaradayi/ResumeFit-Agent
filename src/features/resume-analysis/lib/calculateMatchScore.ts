@@ -1,8 +1,12 @@
 /**
- * Client-side (or server-side) scoring helpers.
+ * Legacy scoring helpers (evidence-map pipeline).
  *
- * The overall score is calculated deterministically from the evidence map,
- * not guessed by the AI.  This makes scores explainable and reproducible.
+ * Not used by the current MVP: fit scores come from the LLM JSON (`matchScore.overall`)
+ * or from `runHeuristicSummaryFallback` when AI fails. Kept for reference if you
+ * reintroduce requirement/evidence-based scoring.
+ *
+ * Previously: the overall score was calculated deterministically from the evidence map,
+ * not guessed by the AI. That made scores explainable and reproducible.
  *
  * Scoring formula:
  *   item_score = STRENGTH_SCORES[strength] * PRIORITY_WEIGHTS[priority]
@@ -54,10 +58,7 @@ function scoreItems(items: EvidenceMapItem[]): number | null {
 }
 
 /**
- * Derives a full MatchScore from the evidence map returned by the AI.
- *
- * Call this after the AI returns `evidenceMap` so that the score is always
- * grounded in the actual evidence — not a freeform AI number.
+ * Derives a full MatchScore from an evidence map (legacy pipeline only).
  */
 export function calculateMatchScore(
   evidenceMap: EvidenceMapItem[]
