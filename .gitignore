@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local agent skills
+.agents/skills/vercel-react-best-practices/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
