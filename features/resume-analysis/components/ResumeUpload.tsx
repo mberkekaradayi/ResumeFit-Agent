@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
-import { Upload, FileText, AlertTriangle } from "lucide-react";
+import { useRef, useState } from "react";
+import { Upload, FileText, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 type ResumeUploadProps = {
@@ -11,6 +12,7 @@ type ResumeUploadProps = {
   warning: string | null;
   error: string | null;
   onFileSelect: (file: File) => void;
+  onRemoveFile: () => void;
 };
 
 export function ResumeUpload({
@@ -18,19 +20,35 @@ export function ResumeUpload({
   warning,
   error,
   onFileSelect,
+  onRemoveFile,
 }: ResumeUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<{
+    name: string;
+    size: number;
+  } | null>(null);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) onFileSelect(file);
+    if (file) {
+      setSelectedFile({ name: file.name, size: file.size });
+      onFileSelect(file);
+    }
     e.target.value = "";
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) onFileSelect(file);
+    if (file) {
+      setSelectedFile({ name: file.name, size: file.size });
+      onFileSelect(file);
+    }
+  }
+
+  function handleRemoveFile() {
+    setSelectedFile(null);
+    onRemoveFile();
   }
 
   return (
@@ -82,6 +100,36 @@ export function ResumeUpload({
         disabled={isLoading}
       />
 
+      {selectedFile && (
+        <Alert>
+          <FileText />
+          <AlertDescription className="flex flex-wrap items-center gap-2 justify-between">
+            <div className="flex flex-wrap items-center gap-2">
+            <span className="font-medium text-foreground">
+              {selectedFile.name}
+            </span>
+            <Badge variant="secondary" className="text-[11px]">
+              {formatBytes(selectedFile.size)}
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              File selected
+            </span>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleRemoveFile}
+              className="h-7 px-2 text-xs"
+              disabled={isLoading}
+            >
+              <X className="size-3.5" />
+              Remove
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {warning && (
         <Alert>
           <AlertTriangle />
@@ -97,4 +145,10 @@ export function ResumeUpload({
       )}
     </div>
   );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

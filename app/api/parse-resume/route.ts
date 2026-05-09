@@ -10,7 +10,11 @@
  * route stays thin and the extractor can be unit tested independently.
  */
 
-import { extractResumeText } from "@/lib/pdf/extractResumeText";
+import {
+  extractResumeText,
+  MAX_PDF_FILE_BYTES,
+  PdfExtractionError,
+} from "@/lib/pdf/extractResumeText";
 import type { ParseResumeResponse } from "@/types/api.types";
 
 export async function POST(request: Request) {
@@ -44,6 +48,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (file.size > MAX_PDF_FILE_BYTES) {
+    return Response.json(
+      {
+        message: `PDF is too large. Max size is ${MAX_PDF_FILE_BYTES / (1024 * 1024)}MB.`,
+        code: "PDF_TOO_LARGE",
+      },
+      { status: 413 }
+    );
+  }
+
   try {
     const buffer = await file.arrayBuffer();
     const result = await extractResumeText(buffer);
@@ -55,12 +69,34 @@ export async function POST(request: Request) {
     };
 
     return Response.json(response);
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("[parse-resume] Extraction error:", err);
+
+    if (err instanceof PdfExtractionError) {
+      const status =
+        err.code === "PDF_TOO_LARGE"
+          ? 413
+          : err.code === "PDF_PARSE_TIMEOUT"
+          ? 408
+          : 422;
+
+      return Response.json(
+        {
+          message:
+            err.code === "PDF_PARSE_TIMEOUT"
+              ? "PDF parsing took too long. Please try a smaller PDF or paste resume text manually."
+              : err.message,
+          code: err.code,
+        },
+        { status }
+      );
+    }
+
     return Response.json(
       {
         message:
           "Failed to extract text from the PDF. Please try a different file or paste your resume text manually.",
+        code: "PDF_PARSE_FAILED",
       },
       { status: 500 }
     );

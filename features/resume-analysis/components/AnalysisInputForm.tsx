@@ -48,6 +48,7 @@ export function AnalysisInputForm({
             warning={parser.warning}
             error={parser.error}
             onFileSelect={parser.parseFile}
+          onRemoveFile={parser.reset}
           />
 
           <ResumeTextEditor

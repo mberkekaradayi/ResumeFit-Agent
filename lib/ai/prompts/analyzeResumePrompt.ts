@@ -2,39 +2,80 @@
  * Prompt builder for the main resume-analysis pipeline.
  *
  * Prompts live here — never inside API route handlers or React components.
- * Each builder accepts typed inputs so typos are caught at compile time.
- *
- * TODO: Implement the full multi-step prompt chain once the OpenAI client is
- * configured.  Consider a sequence such as:
- *   1. extractRequirementsPrompt  – job description → JobRequirements
- *   2. buildResumeProfilePrompt   – resume text → ResumeProfile
- *   3. mapEvidencePrompt          – requirements + profile → EvidenceMapItem[]
- *   4. generateRewritesPrompt     – evidence map + bullets → BulletRewrite[]
- *   5. validateFactualityPrompt   – rewrites + original resume → FactualityWarning[]
- *   6. generateInterviewPrepPrompt – evidence map + gaps → InterviewQuestion[]
+ * Each builder enforces the PRD principle:
+ * "Never invent experience. Ground everything in resume evidence."
  */
 
 export type ExtractRequirementsInput = {
   jobDescription: string;
 };
 
+const OUTPUT_RULES = `
+IMPORTANT OUTPUT RULES:
+- Return JSON only (no markdown, no commentary, no code fences).
+- Do not include keys outside the requested schema.
+- If uncertain, use empty arrays rather than guessing.
+- Keep strings concise and specific.
+`.trim();
+
+const FACTUALITY_RULES = `
+FACTUALITY RULES:
+- Never fabricate technologies, metrics, ownership, or impact.
+- Distinguish clearly between evidence-backed signals and missing/weak signals.
+- If a requirement is implied but not explicit, treat as medium or weak, not strong.
+- Use "missing" when there is no meaningful evidence in the resume.
+`.trim();
+
 export function buildExtractRequirementsPrompt(
   input: ExtractRequirementsInput
 ): string {
-  // TODO: Replace with a production-quality prompt. The output should be
-  // valid JSON matching the `JobRequirements` type.
   return `
-You are a senior technical recruiter. Extract the key requirements from the following job description.
+You are a senior technical recruiter. Extract structured role requirements from a job description.
 
-Return a JSON object matching this structure:
+Classify requirements with these enums:
+- category: "technical" | "experience" | "ai_llm" | "ownership" | "communication" | "domain" | "soft_skill"
+- priority: "must_have" | "nice_to_have"
+
+Return a JSON object exactly matching:
 {
-  "mustHave": [...],
-  "niceToHave": [...],
+  "mustHave": [
+    {
+      "id": "req_1",
+      "text": "string",
+      "category": "technical",
+      "priority": "must_have",
+      "keywords": ["string"],
+      "explanation": "string",
+      "evidenceFromJobDescription": ["exact phrase from JD"]
+    }
+  ],
+  "niceToHave": [
+    {
+      "id": "req_2",
+      "text": "string",
+      "category": "ai_llm",
+      "priority": "nice_to_have",
+      "keywords": ["string"],
+      "explanation": "string",
+      "evidenceFromJobDescription": ["exact phrase from JD"]
+    }
+  ],
   "technologies": [...],
   "responsibilities": [...],
   "softSkills": [...],
-  "senioritySignals": [...]
+  "senioritySignals": [...],
+  "domainSignals": [...],
+  "aiLlmSignals": [...]
 }
+
+Guidance:
+- Include only role-relevant requirements (deduplicate overlaps).
+- Prefer concrete, testable requirement statements over vague summaries.
+- Include AI/LLM signals only if present in the JD.
+- IDs must be stable and unique within this response ("req_1", "req_2", ...).
+- "evidenceFromJobDescription" must quote exact supporting snippets from the JD.
+
+${OUTPUT_RULES}
 
 Job Description:
 ${input.jobDescription}
@@ -48,11 +89,32 @@ export type BuildResumeProfileInput = {
 export function buildResumeProfilePrompt(
   input: BuildResumeProfileInput
 ): string {
-  // TODO: Implement with structured output schema enforcement.
   return `
-You are a resume parsing expert. Convert this resume into a structured profile.
+You are a resume parsing expert. Convert resume text into a structured evidence profile.
 
-Return a JSON object matching the ResumeProfile type.
+Return JSON exactly matching this TypeScript-like shape:
+{
+  "skills": string[],
+  "experience": string[],
+  "projects": string[],
+  "education": string[],
+  "technologies": string[],
+  "metrics": string[],
+  "ownershipSignals": string[],
+  "communicationSignals": string[],
+  "aiLlmSignals": string[]
+}
+
+Guidance:
+- Extract explicit evidence snippets, not generic summaries.
+- Keep each item atomic (one claim per item) and concise.
+- Preserve important numbers/scale/impact in metrics (e.g. "$6B+", "99%+").
+- Normalize synonyms (e.g. "TS" -> "TypeScript") in technologies/skills.
+- Keep ordering meaningful: most recent / most relevant evidence first.
+- If a section is absent, return an empty array.
+
+${FACTUALITY_RULES}
+${OUTPUT_RULES}
 
 Resume:
 ${input.resumeText}
@@ -61,22 +123,64 @@ ${input.resumeText}
 
 export type MapEvidenceInput = {
   resumeText: string;
-  jobDescription: string;
+  resumeProfileJson: string;
+  jobRequirementsJson: string;
 };
 
 export function buildMapEvidencePrompt(input: MapEvidenceInput): string {
-  // TODO: Implement evidence mapping logic with explicit strength rubric.
   return `
-You are an expert at matching resume experience to job requirements.
+You are an expert at mapping resume evidence to job requirements.
 
-For each job requirement, identify the matching resume evidence and assign a strength: "strong" | "medium" | "weak" | "missing".
+For each requirement, return an EvidenceMapItem with:
+- requirementId
+- requirement
+- category
+- priority
+- matchingEvidence
+- strength
+- explanation
 
-Return a JSON array of EvidenceMapItem objects.
+Strength rubric:
+- "strong": direct, explicit, requirement-level evidence with clear role relevance AND at least one concrete anchor (technology, scope, metric, ownership, production context).
+- "medium": partially supported; relevant but not fully explicit.
+- "weak": adjacent/indirect signal with limited support.
+- "missing": no meaningful evidence.
+
+Strict "strong" guardrail:
+- Do NOT mark "strong" if support depends on inference only.
+- Do NOT mark "strong" if evidence is generic without requirement-specific anchors.
+- If uncertain between strong and medium, choose medium.
+
+Return JSON array only:
+[
+  {
+    "requirementId": "req_1",
+    "requirement": "string",
+    "category": "technical",
+    "priority": "must_have",
+    "matchingEvidence": ["string"],
+    "strength": "strong",
+    "explanation": "string"
+  }
+]
+
+Rules:
+- Evaluate all requirements provided below.
+- Use exact requirement IDs from input.
+- If strength is "missing", matchingEvidence must be [].
+- If strength is "strong", matchingEvidence must include at least 2 concrete snippets.
+- Keep explanation specific and grounded in the resume.
 
 Resume:
 ${input.resumeText}
 
-Job Description:
-${input.jobDescription}
+Structured Resume Profile (JSON):
+${input.resumeProfileJson}
+
+Structured Job Requirements (JSON):
+${input.jobRequirementsJson}
+
+${FACTUALITY_RULES}
+${OUTPUT_RULES}
   `.trim();
 }
