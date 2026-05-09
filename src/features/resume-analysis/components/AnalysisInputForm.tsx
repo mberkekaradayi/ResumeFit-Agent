@@ -44,10 +44,10 @@ export function AnalysisInputForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
-        {/* Step 1 — Resume */}
+        {/* Step 1: Resume */}
         <div className="space-y-4 rf-panel p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
-            Step 1 — Resume
+            Step 1: Resume
           </p>
 
           <ResumeTextEditor
@@ -67,10 +67,10 @@ export function AnalysisInputForm({
           )}
         </div>
 
-        {/* Step 2 — Job Description */}
+        {/* Step 2: Job Description */}
         <div className="space-y-4 rf-panel p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-300">
-            Step 2 — Job Description
+            Step 2: Job Description
           </p>
 
           <JobDescriptionInput

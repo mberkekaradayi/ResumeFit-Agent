@@ -42,7 +42,7 @@ export function AnalysisResults({ analysis, onReset }: AnalysisResultsProps) {
                 <ul className="space-y-0.5">
                   {analysis.meta.warnings.slice(0, 3).map((warning, index) => (
                     <li key={`${index}-${warning}`} className="text-[11px] text-zinc-300">
-                      - {warning}
+                      {warning}
                     </li>
                   ))}
                 </ul>

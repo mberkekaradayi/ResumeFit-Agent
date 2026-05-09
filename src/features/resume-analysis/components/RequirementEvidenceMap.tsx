@@ -88,7 +88,7 @@ function EvidenceRow({ item }: { item: EvidenceMapItem }) {
           {item.matchingEvidence.map((e, i) => (
             <li
               key={i}
-              className="relative text-xs text-muted-foreground before:absolute before:left-[-0.75rem] before:content-['–']"
+              className="relative pl-3 text-xs text-muted-foreground before:absolute before:left-0 before:top-[0.45rem] before:size-1 before:rounded-full before:bg-zinc-400"
             >
               {e}
             </li>
