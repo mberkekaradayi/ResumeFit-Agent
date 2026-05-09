@@ -31,8 +31,8 @@ export function ResumeTextEditor({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        rows={14}
-        className="min-h-48 font-mono text-sm leading-relaxed border-white/15 bg-zinc-950/70"
+        rows={9}
+        className="min-h-32 font-mono text-sm leading-relaxed border-white/15 bg-zinc-950/70"
       />
 
       <p className="text-xs text-zinc-300">

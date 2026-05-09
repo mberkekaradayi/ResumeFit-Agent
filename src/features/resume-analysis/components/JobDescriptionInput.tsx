@@ -42,9 +42,9 @@ export function JobDescriptionInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Paste the full job description here…"
-        rows={12}
+        rows={9}
         aria-invalid={hasError}
-        className="min-h-40 leading-relaxed border-white/15 bg-zinc-950/70"
+        className="min-h-32 leading-relaxed border-white/15 bg-zinc-950/70"
       />
 
       {isTooShort && !error && (

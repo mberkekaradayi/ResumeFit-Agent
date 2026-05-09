@@ -91,7 +91,7 @@ export function AnalysisInputForm({
             type="submit"
             disabled={isAnalysing || isBlockedByInputSize}
             size="lg"
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto min-w-[220px] h-12 px-6 text-sm font-semibold tracking-wide bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.35)] disabled:shadow-none"
           >
             {isAnalysing ? (
               <>

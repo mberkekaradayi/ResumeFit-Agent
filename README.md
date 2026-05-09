@@ -35,16 +35,16 @@ The backend always attempts AI first, then falls back to heuristic scoring if AI
 
 ## Project Structure (Key Paths)
 
-- `app/api/analyze/route.ts` — analysis API endpoint
-- `lib/ai/analysisPipeline.ts` — orchestration (AI attempt + retry + fallback)
-- `lib/ai/prompts/analyzeResumePrompt.ts` — core prompt builder
-- `lib/ai/pipeline/` — pipeline modules:
+- `src/app/api/analyze/route.ts` — analysis API endpoint
+- `src/lib/ai/analysisPipeline.ts` — orchestration (AI attempt + retry + fallback)
+- `src/lib/ai/prompts/analyzeResumePrompt.ts` — core prompt builder
+- `src/lib/ai/pipeline/` — pipeline modules:
   - `preprocess.ts`
   - `jsonRunner.ts`
   - `heuristicFallback.ts`
-- `features/resume-analysis/components/` — input + results UI
-- `features/resume-analysis/hooks/useResumeAnalysis.ts` — client analysis flow
-- `features/resume-analysis/lib/normalizeAnalysisResponse.ts` — response normalization
+- `src/features/resume-analysis/components/` — input + results UI
+- `src/features/resume-analysis/hooks/useResumeAnalysis.ts` — client analysis flow
+- `src/features/resume-analysis/lib/normalizeAnalysisResponse.ts` — response normalization
 - `PRD-v1.md` — MVP product spec
 
 ## Setup
