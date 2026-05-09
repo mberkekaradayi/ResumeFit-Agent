@@ -28,6 +28,7 @@ export function ResumeAnalysisView() {
     runAnalysis,
     cancelAnalysis,
     reset,
+    clearErrors,
   } = useResumeAnalysis();
 
   if (isLoading) {
@@ -78,6 +79,7 @@ export function ResumeAnalysisView() {
         isAnalysing={isLoading}
         validationErrors={validationErrors}
         onAnalyze={runAnalysis}
+        onInputsChange={clearErrors}
       />
     </div>
   );

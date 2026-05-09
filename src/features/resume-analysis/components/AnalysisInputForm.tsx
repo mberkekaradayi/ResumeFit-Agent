@@ -9,20 +9,34 @@ import {
   MAX_JOB_DESCRIPTION_LENGTH,
   MAX_RESUME_TEXT_LENGTH,
 } from "../constants/analysis.constants";
+import { validateAnalysisInput } from "../lib/validateAnalysisInput";
 
 type AnalysisInputFormProps = {
   isAnalysing: boolean;
   validationErrors: { field: string; message: string }[];
   onAnalyze: (resumeText: string, jobDescription: string) => void;
+  /** Called when resume or job description text changes (clears prior errors) */
+  onInputsChange?: () => void;
 };
 
 export function AnalysisInputForm({
   isAnalysing,
   validationErrors,
   onAnalyze,
+  onInputsChange,
 }: AnalysisInputFormProps) {
   const [resumeText, setResumeText] = useState("");
   const [jobDescription, setJobDescription] = useState("");
+
+  function handleResumeChange(value: string) {
+    onInputsChange?.();
+    setResumeText(value);
+  }
+
+  function handleJobDescriptionChange(value: string) {
+    onInputsChange?.();
+    setJobDescription(value);
+  }
 
   const resumeError = validationErrors.find(
     (e) => e.field === "resumeText"
@@ -34,7 +48,10 @@ export function AnalysisInputForm({
   const jdLength = jobDescription.trim().length;
   const isResumeTooLong = resumeLength > MAX_RESUME_TEXT_LENGTH;
   const isJobDescriptionTooLong = jdLength > MAX_JOB_DESCRIPTION_LENGTH;
-  const isBlockedByInputSize = isResumeTooLong || isJobDescriptionTooLong;
+  const validation = validateAnalysisInput(resumeText, jobDescription);
+  const meetsRequirements = validation.valid;
+  const showRequirementHint =
+    validationErrors.length === 0 && !meetsRequirements && !isAnalysing;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +69,7 @@ export function AnalysisInputForm({
 
           <ResumeTextEditor
             value={resumeText}
-            onChange={setResumeText}
+            onChange={handleResumeChange}
             placeholder="Paste your resume content here (experience bullets + skills + projects)."
           />
 
@@ -75,7 +92,7 @@ export function AnalysisInputForm({
 
           <JobDescriptionInput
             value={jobDescription}
-            onChange={setJobDescription}
+            onChange={handleJobDescriptionChange}
             error={jdError}
           />
         </div>
@@ -89,7 +106,7 @@ export function AnalysisInputForm({
           </p>
           <Button
             type="submit"
-            disabled={isAnalysing || isBlockedByInputSize}
+            disabled={isAnalysing || !meetsRequirements}
             size="lg"
             className="w-full sm:w-auto min-w-[220px] h-12 px-6 text-sm font-semibold tracking-wide bg-emerald-500 text-black hover:bg-emerald-400 shadow-[0_0_24px_rgba(16,185,129,0.35)] disabled:shadow-none"
           >
@@ -111,6 +128,13 @@ export function AnalysisInputForm({
             Job description is too long ({jdLength} characters). Keep it under{" "}
             {MAX_JOB_DESCRIPTION_LENGTH} characters to submit.
           </p>
+        )}
+        {showRequirementHint && validation.errors.length > 0 && (
+          <ul className="mt-2 max-w-xl list-disc space-y-1 pl-4 text-xs text-zinc-400">
+            {validation.errors.map((err) => (
+              <li key={err.field}>{err.message}</li>
+            ))}
+          </ul>
         )}
       </div>
     </form>

@@ -24,6 +24,8 @@ export type UseResumeAnalysisActions = {
   runAnalysis: (resumeText: string, jobDescription: string) => Promise<void>;
   cancelAnalysis: () => void;
   reset: () => void;
+  /** Clears API and validation errors when the user edits inputs */
+  clearErrors: () => void;
 };
 
 const initialState: UseResumeAnalysisState = {
@@ -48,6 +50,7 @@ export function useResumeAnalysis(): UseResumeAnalysisState &
         setState((s) => ({
           ...s,
           validationErrors: validation.errors,
+          error: null,
         }));
         return;
       }
@@ -146,10 +149,18 @@ export function useResumeAnalysis(): UseResumeAnalysisState &
     setState(initialState);
   }, []);
 
+  const clearErrors = useCallback(() => {
+    setState((s) => {
+      if (s.error === null && s.validationErrors.length === 0) return s;
+      return { ...s, error: null, validationErrors: [] };
+    });
+  }, []);
+
   return {
     ...state,
     runAnalysis,
     cancelAnalysis,
     reset,
+    clearErrors,
   };
 }
