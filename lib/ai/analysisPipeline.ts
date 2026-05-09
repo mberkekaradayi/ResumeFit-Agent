@@ -132,8 +132,12 @@ async function runAiOrFallback(
 }
 
 function toShortError(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return "Unknown error";
+  if (!(error instanceof Error)) return "Unknown error";
+  const message = error.message.toLowerCase();
+  if (message.includes("timed out")) return "Model request timed out";
+  if (message.includes("json")) return "Model returned invalid structured output";
+  if (message.includes("empty")) return "Model returned empty output";
+  return "Model request failed";
 }
 
 function isValidSimpleOutput(value: SimpleAiOutput): boolean {
