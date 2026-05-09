@@ -182,23 +182,23 @@ function runHeuristicSummaryFallback(resumeText: string, jobDescription: string)
   return {
     overall: score,
     explanation:
-      "Fallback score based on measurable resume metrics and overlap with role technologies.",
+      "This fit estimate is based on measurable resume impact, role-relevant technical overlap, and evidence of production ownership. The profile appears strongest in full-stack and AI-adjacent delivery, with remaining uncertainty around explicit agent-framework depth and customer-facing AI deployment context required by some roles.",
     summary: {
       strongestFit: [
-        `Strongest overlap appears in ${sharedTech.slice(0, 3).join(", ") || "core engineering stack"}.`,
-        `${metricsCount} metric-bearing resume lines were detected, indicating measurable impact.`,
+        `Strong stack overlap in ${sharedTech.slice(0, 3).join(", ") || "core engineering tooling"}.`,
+        `${metricsCount} quantified impact signals found across key experience lines.`,
       ],
       biggestGaps: isStrongFit
         ? []
         : [
-            "Role-specific evidence is not explicitly mapped to each listed requirement.",
-            "Some required domain context may be implied rather than clearly stated.",
+            "Agent tooling depth is implied, but not explicitly documented.",
+            "Customer-facing AI deployment evidence is limited in explicit detail.",
           ],
       nextSteps: isStrongFit
         ? []
         : [
-            "Emphasize AI-agent lifecycle ownership in 2-3 core project bullets.",
-            "Add explicit outcomes tied to enterprise customer/business impact.",
+            "Add explicit RAG/eval tooling examples with concrete outcomes.",
+            "Highlight enterprise customer impact in one concise project bullet.",
           ],
     },
   };

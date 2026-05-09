@@ -19,7 +19,7 @@ export function normalizeAnalysisResponse(
     raw.matchScore?.label ??
     (overall >= 75 ? "strong" : overall >= 50 ? "moderate" : "weak");
   const explanation =
-    raw.matchScore?.explanation?.trim() ||
+    sanitizeScoreExplanation(raw.matchScore?.explanation) ||
     "Estimated alignment based on role-relevant metrics and requirement match.";
   const summary = {
     strongestFit: (raw.summary?.strongestFit ?? [])
@@ -54,4 +54,13 @@ export function normalizeAnalysisResponse(
 function clampScore(score: number): number {
   if (!Number.isFinite(score)) return 0;
   return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function sanitizeScoreExplanation(explanation: string | undefined): string {
+  if (!explanation) return "";
+  return explanation
+    .trim()
+    .replace(/^estimated alignment\s*\d+\s*\/\s*100\s*[—:-]?\s*/i, "")
+    .replace(/^(score|overall)\s*[—:-]?\s*/i, "")
+    .replace(/\s+/g, " ");
 }

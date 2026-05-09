@@ -23,9 +23,6 @@ export function AnalysisResults({ analysis, onReset }: AnalysisResultsProps) {
       {/* Top bar */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[11px] tracking-[0.16em] uppercase text-zinc-300 mb-1">
-            Analysis Results
-          </p>
           <h1 className="text-xl font-semibold text-zinc-100">
             Analysis results
           </h1>

@@ -58,6 +58,13 @@ Set "label" based on the overall score:
 - 50-74: "moderate"
 - 75-100: "strong"
 
+matchScore.explanation requirements:
+- Provide a richer executive summary (target 30-60 words).
+- Explain why the score is what it is using high-level evidence themes.
+- Do NOT repeat the numeric score or label.
+- Do NOT start with phrases like "Estimated alignment", "Score", or "Overall".
+- Good example: "Resume shows strong production ownership, measurable delivery impact, and clear stack overlap for core requirements, while gaps remain in explicit agent-framework and enterprise deployment signals."
+
 Score based on:
 - technical stack overlap
 - role-relevant experience
@@ -68,10 +75,13 @@ Score based on:
 - communication or collaboration signals only if relevant to the role
 
 Summary requirements:
-- strongestFit: 2-3 concise bullets showing the strongest evidence-backed matches.
-- biggestGaps: 0-3 concise bullets showing missing or weakly supported role requirements.
-- nextSteps: 0-3 concise bullets suggesting what the candidate should improve, clarify, or emphasize.
+- strongestFit: 2-3 specific items showing the strongest evidence-backed matches.
+- biggestGaps: 0-3 specific items showing missing or weakly supported role requirements.
+- nextSteps: 0-3 specific items suggesting what the candidate should improve, clarify, or emphasize.
 - If overall score is 85+ with very strong coverage, you may return empty arrays for biggestGaps and nextSteps.
+- Do not repeat the numeric score, label, or phrases like "Estimated alignment" in summary.
+- Keep each summary item short and scannable (prefer 8-18 words).
+- strongestFit and biggestGaps should reference at least one explicit requirement from the job description.
 
 Important:
 - Do not generate resume rewrites.
