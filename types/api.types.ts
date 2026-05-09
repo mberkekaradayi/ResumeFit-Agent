@@ -4,22 +4,12 @@
  */
 
 import type {
-  GapAnalysis,
-  EvidenceMapItem,
   MatchScore,
-  BulletRewrite,
-  FactualityWarning,
-  InterviewQuestion,
-  JobRequirements,
-  ResumeProfile,
+  AnalysisMeta,
+  AnalysisSummary,
 } from "@/features/resume-analysis/types/analysis.types";
 
 // ─── Requests ────────────────────────────────────────────────────────────────
-
-export type ParseResumeRequest = {
-  /** Raw PDF file sent as multipart/form-data under the "file" field */
-  file: File;
-};
 
 export type AnalyzeRequest = {
   resumeText: string;
@@ -28,22 +18,10 @@ export type AnalyzeRequest = {
 
 // ─── Responses ───────────────────────────────────────────────────────────────
 
-export type ParseResumeResponse = {
-  extractedText: string;
-  /** True when the PDF was image-based or extraction yielded very little text */
-  isPartial: boolean;
-  warning?: string;
-};
-
 export type AnalyzeResponse = {
-  jobRequirements: JobRequirements;
-  resumeProfile: ResumeProfile;
   matchScore: MatchScore;
-  evidenceMap: EvidenceMapItem[];
-  gaps: GapAnalysis;
-  rewrites: BulletRewrite[];
-  factualityWarnings: FactualityWarning[];
-  interviewPrep: InterviewQuestion[];
+  summary: AnalysisSummary;
+  meta: AnalysisMeta;
 };
 
 // ─── Shared error shape ───────────────────────────────────────────────────────

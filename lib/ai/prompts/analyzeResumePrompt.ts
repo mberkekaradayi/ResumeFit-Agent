@@ -1,186 +1,93 @@
 /**
- * Prompt builder for the main resume-analysis pipeline.
- *
- * Prompts live here — never inside API route handlers or React components.
- * Each builder enforces the PRD principle:
- * "Never invent experience. Ground everything in resume evidence."
+ * Prompt builder for the MVP single-call analysis pipeline.
  */
 
-export type ExtractRequirementsInput = {
-  jobDescription: string;
-};
-
 const OUTPUT_RULES = `
-IMPORTANT OUTPUT RULES:
-- Return JSON only (no markdown, no commentary, no code fences).
-- Do not include keys outside the requested schema.
-- If uncertain, use empty arrays rather than guessing.
-- Keep strings concise and specific.
+OUTPUT RULES:
+- Return valid JSON only. Do not include markdown, commentary, or code fences.
+- Use only the keys defined in the schema.
+- Keep text concise and specific.
+- Do not return null values. Use empty arrays when needed.
 `.trim();
 
 const FACTUALITY_RULES = `
 FACTUALITY RULES:
-- Never fabricate technologies, metrics, ownership, or impact.
-- Distinguish clearly between evidence-backed signals and missing/weak signals.
-- If a requirement is implied but not explicit, treat as medium or weak, not strong.
-- Use "missing" when there is no meaningful evidence in the resume.
+- Never invent technologies, metrics, scope, seniority, ownership, or impact.
+- Use only evidence from the resume and job description.
+- If support is partial, describe it as partial.
+- If no evidence exists, describe it as a gap.
+- Do not assume experience just because a related technology is mentioned.
 `.trim();
 
-export function buildExtractRequirementsPrompt(
-  input: ExtractRequirementsInput
-): string {
+export type BuildCoreAnalysisInput = {
+  resumeText: string;
+  jobDescription: string;
+};
+
+export function buildMvpAnalysisPrompt(input: BuildCoreAnalysisInput): string {
   return `
-You are a senior technical recruiter. Extract structured role requirements from a job description.
+You are an expert technical recruiter and hiring manager for software, AI, data, and engineering roles.
 
-Classify requirements with these enums:
-- category: "technical" | "experience" | "ai_llm" | "ownership" | "communication" | "domain" | "soft_skill"
-- priority: "must_have" | "nice_to_have"
+Your task is to produce a fast MVP resume-to-job fit analysis.
 
-Return a JSON object exactly matching:
+Analyze how well the resume matches the job description based only on the provided text.
+
+Return JSON only with this exact shape:
 {
-  "mustHave": [
-    {
-      "id": "req_1",
-      "text": "string",
-      "category": "technical",
-      "priority": "must_have",
-      "keywords": ["string"],
-      "explanation": "string",
-      "evidenceFromJobDescription": ["exact phrase from JD"]
-    }
-  ],
-  "niceToHave": [
-    {
-      "id": "req_2",
-      "text": "string",
-      "category": "ai_llm",
-      "priority": "nice_to_have",
-      "keywords": ["string"],
-      "explanation": "string",
-      "evidenceFromJobDescription": ["exact phrase from JD"]
-    }
-  ],
-  "technologies": [...],
-  "responsibilities": [...],
-  "softSkills": [...],
-  "senioritySignals": [...],
-  "domainSignals": [...],
-  "aiLlmSignals": [...]
+  "matchScore": {
+    "overall": 0,
+    "label": "weak",
+    "explanation": "string"
+  },
+  "summary": {
+    "strongestFit": ["string"],
+    "biggestGaps": ["string"],
+    "nextSteps": ["string"]
+  }
 }
 
-Guidance:
-- Include only role-relevant requirements (deduplicate overlaps).
-- Prefer concrete, testable requirement statements over vague summaries.
-- Include AI/LLM signals only if present in the JD.
-- IDs must be stable and unique within this response ("req_1", "req_2", ...).
-- "evidenceFromJobDescription" must quote exact supporting snippets from the JD.
+Scoring guidance:
+- 85-100 = strong fit: resume directly matches most important requirements with clear evidence.
+- 70-84 = good fit: resume matches many important requirements, with some gaps.
+- 50-69 = moderate fit: resume has relevant experience but several important gaps.
+- 30-49 = weak fit: resume has limited alignment with the role.
+- 0-29 = poor fit: resume has little evidence for the role.
+
+Set "label" based on the overall score:
+- 0-49: "weak"
+- 50-74: "moderate"
+- 75-100: "strong"
+
+Score based on:
+- technical stack overlap
+- role-relevant experience
+- production or real-world impact
+- ownership and scope
+- domain relevance
+- AI/LLM relevance only if the job description asks for it
+- communication or collaboration signals only if relevant to the role
+
+Summary requirements:
+- strongestFit: 2-3 concise bullets showing the strongest evidence-backed matches.
+- biggestGaps: 0-3 concise bullets showing missing or weakly supported role requirements.
+- nextSteps: 0-3 concise bullets suggesting what the candidate should improve, clarify, or emphasize.
+- If overall score is 85+ with very strong coverage, you may return empty arrays for biggestGaps and nextSteps.
+
+Important:
+- Do not generate resume rewrites.
+- Do not generate interview questions.
+- Do not include long explanations.
+- Do not claim ATS certainty.
+- Do not say the candidate is qualified or unqualified with certainty.
+- Frame the score as an estimated alignment score based on the provided resume and job description.
 
 ${OUTPUT_RULES}
+${FACTUALITY_RULES}
+
+Resume:
+${input.resumeText}
 
 Job Description:
 ${input.jobDescription}
-  `.trim();
-}
-
-export type BuildResumeProfileInput = {
-  resumeText: string;
-};
-
-export function buildResumeProfilePrompt(
-  input: BuildResumeProfileInput
-): string {
-  return `
-You are a resume parsing expert. Convert resume text into a structured evidence profile.
-
-Return JSON exactly matching this TypeScript-like shape:
-{
-  "skills": string[],
-  "experience": string[],
-  "projects": string[],
-  "education": string[],
-  "technologies": string[],
-  "metrics": string[],
-  "ownershipSignals": string[],
-  "communicationSignals": string[],
-  "aiLlmSignals": string[]
-}
-
-Guidance:
-- Extract explicit evidence snippets, not generic summaries.
-- Keep each item atomic (one claim per item) and concise.
-- Preserve important numbers/scale/impact in metrics (e.g. "$6B+", "99%+").
-- Normalize synonyms (e.g. "TS" -> "TypeScript") in technologies/skills.
-- Keep ordering meaningful: most recent / most relevant evidence first.
-- If a section is absent, return an empty array.
-
-${FACTUALITY_RULES}
-${OUTPUT_RULES}
-
-Resume:
-${input.resumeText}
-  `.trim();
-}
-
-export type MapEvidenceInput = {
-  resumeText: string;
-  resumeProfileJson: string;
-  jobRequirementsJson: string;
-};
-
-export function buildMapEvidencePrompt(input: MapEvidenceInput): string {
-  return `
-You are an expert at mapping resume evidence to job requirements.
-
-For each requirement, return an EvidenceMapItem with:
-- requirementId
-- requirement
-- category
-- priority
-- matchingEvidence
-- strength
-- explanation
-
-Strength rubric:
-- "strong": direct, explicit, requirement-level evidence with clear role relevance AND at least one concrete anchor (technology, scope, metric, ownership, production context).
-- "medium": partially supported; relevant but not fully explicit.
-- "weak": adjacent/indirect signal with limited support.
-- "missing": no meaningful evidence.
-
-Strict "strong" guardrail:
-- Do NOT mark "strong" if support depends on inference only.
-- Do NOT mark "strong" if evidence is generic without requirement-specific anchors.
-- If uncertain between strong and medium, choose medium.
-
-Return JSON array only:
-[
-  {
-    "requirementId": "req_1",
-    "requirement": "string",
-    "category": "technical",
-    "priority": "must_have",
-    "matchingEvidence": ["string"],
-    "strength": "strong",
-    "explanation": "string"
-  }
-]
-
-Rules:
-- Evaluate all requirements provided below.
-- Use exact requirement IDs from input.
-- If strength is "missing", matchingEvidence must be [].
-- If strength is "strong", matchingEvidence must include at least 2 concrete snippets.
-- Keep explanation specific and grounded in the resume.
-
-Resume:
-${input.resumeText}
-
-Structured Resume Profile (JSON):
-${input.resumeProfileJson}
-
-Structured Job Requirements (JSON):
-${input.jobRequirementsJson}
-
-${FACTUALITY_RULES}
-${OUTPUT_RULES}
   `.trim();
 }

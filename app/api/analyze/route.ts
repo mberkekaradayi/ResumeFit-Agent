@@ -14,9 +14,7 @@
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types/api.types";
 import { validateAnalysisInput } from "@/features/resume-analysis/lib/validateAnalysisInput";
 import { normalizeAnalysisResponse } from "@/features/resume-analysis/lib/normalizeAnalysisResponse";
-
-// TODO: Import and wire up the real AI pipeline once `openai` is installed:
-// import { runAnalysisPipeline } from "@/lib/ai/analysisPipeline";
+import { runAnalysisPipeline } from "@/lib/ai/analysisPipeline";
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -24,62 +22,30 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return Response.json(
-      { message: "Invalid JSON body." },
-      { status: 400 }
-    );
+    return Response.json({ message: "Invalid JSON body." }, { status: 400 });
   }
 
-  const { resumeText, jobDescription } = (body ?? {}) as Partial<AnalyzeRequest>;
+  const { resumeText, jobDescription } = (body ??
+    {}) as Partial<AnalyzeRequest>;
 
   // Server-side validation (defence in depth — the client also validates)
-  const validation = validateAnalysisInput(resumeText ?? "", jobDescription ?? "");
+  const validation = validateAnalysisInput(
+    resumeText ?? "",
+    jobDescription ?? "",
+  );
   if (!validation.valid) {
     return Response.json(
       { message: validation.errors[0]?.message ?? "Invalid input." },
-      { status: 422 }
+      { status: 422 },
     );
   }
 
   try {
-    // TODO: Replace mock with the real AI pipeline:
-    // const rawAnalysis = await runAnalysisPipeline({ resumeText, jobDescription });
-    // const analysis = normalizeAnalysisResponse(rawAnalysis);
-
-    // ── Mock response (safe placeholder so the app compiles & runs) ─────────
-    const mockRaw: Partial<AnalyzeResponse> = {
-      jobRequirements: {
-        mustHave: [],
-        niceToHave: [],
-        technologies: [],
-        responsibilities: [],
-        softSkills: [],
-        senioritySignals: [],
-      },
-      resumeProfile: {
-        skills: [],
-        experience: [],
-        projects: [],
-        education: [],
-        technologies: [],
-        metrics: [],
-        ownershipSignals: [],
-        communicationSignals: [],
-        aiLlmSignals: [],
-      },
-      evidenceMap: [],
-      gaps: {
-        strongAreas: [],
-        weakAreas: [],
-        missingAreas: [],
-      },
-      rewrites: [],
-      factualityWarnings: [],
-      interviewPrep: [],
-    };
-
-    const analysis = normalizeAnalysisResponse(mockRaw);
-    // ────────────────────────────────────────────────────────────────────────
+    const rawAnalysis = await runAnalysisPipeline({
+      resumeText: resumeText!,
+      jobDescription: jobDescription!,
+    });
+    const analysis = normalizeAnalysisResponse(rawAnalysis as Partial<AnalyzeResponse>);
 
     return Response.json(analysis);
   } catch (err) {
@@ -89,7 +55,7 @@ export async function POST(request: Request) {
         message:
           "The analysis could not be completed. Please try again or check the server logs.",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

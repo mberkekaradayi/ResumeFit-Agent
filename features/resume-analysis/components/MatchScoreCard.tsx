@@ -8,10 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ScoreBadge } from "@/components/common/ScoreBadge";
 import type { MatchScore } from "../types/analysis.types";
-import { CATEGORY_LABELS } from "../constants/analysis.constants";
-import { scoreColorClass } from "@/lib/utils/formatScore";
 import { cn } from "@/lib/utils";
 
 type MatchScoreCardProps = {
@@ -19,91 +16,50 @@ type MatchScoreCardProps = {
 };
 
 export function MatchScoreCard({ matchScore }: MatchScoreCardProps) {
-  const { overall, categoryScores, explanation } = matchScore;
-
-  const categoryEntries = (
-    Object.entries(categoryScores) as [string, number][]
-  ).filter(([, v]) => v !== undefined);
+  const { overall, explanation, label } = matchScore;
 
   return (
-    <Card className="gap-0">
-      <CardHeader className="border-b">
-        <CardTitle>Overall match score</CardTitle>
+    <Card className="gap-0 rf-panel overflow-hidden">
+      <CardHeader className="border-b border-white/10">
+        <CardTitle className="text-zinc-100">Overall match score</CardTitle>
         <CardDescription>
           Estimated alignment based on resume evidence
         </CardDescription>
+        {label && (
+          <div>
+            <Badge variant="outline" className="capitalize text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-300">
+              {label} fit
+            </Badge>
+          </div>
+        )}
       </CardHeader>
 
       <CardContent className="pt-6 space-y-6">
         {/* Overall score ring + explanation */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-6">
           <div
             className={cn(
-              "flex size-20 shrink-0 items-center justify-center rounded-full border-4 text-2xl font-bold",
+              "flex size-28 shrink-0 items-center justify-center rounded-full border-[5px] text-4xl font-semibold font-mono",
               overall >= 80
-                ? "border-emerald-400 text-emerald-600 dark:border-emerald-600 dark:text-emerald-400"
+                ? "border-emerald-400 text-emerald-300 shadow-[0_0_36px_rgba(16,185,129,0.28)]"
                 : overall >= 65
-                  ? "border-blue-400 text-blue-600 dark:border-blue-600 dark:text-blue-400"
+                  ? "border-blue-400 text-blue-300 shadow-[0_0_36px_rgba(59,130,246,0.24)]"
                   : overall >= 45
-                    ? "border-amber-400 text-amber-600 dark:border-amber-600 dark:text-amber-400"
-                    : "border-red-400 text-red-600 dark:border-red-600 dark:text-red-400",
+                    ? "border-amber-400 text-amber-300 shadow-[0_0_32px_rgba(245,158,11,0.22)]"
+                    : "border-red-400 text-red-300 shadow-[0_0_30px_rgba(239,68,68,0.2)]",
             )}
           >
-            {overall}%
+            <span className="tracking-tight">{overall}</span>
+            <span className="ml-1 text-base text-zinc-500">%</span>
           </div>
           <div className="space-y-1.5">
-            <p className="text-sm font-medium text-foreground">{explanation}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-base font-semibold text-zinc-100">{explanation}</p>
+            <p className="text-xs text-zinc-500 max-w-xl">
               This is an estimated role alignment score. It is not a guarantee
               of ATS performance or hiring outcome.
             </p>
-            <ScoreBadge score={overall} showLabel size="sm" />
           </div>
         </div>
-
-        {/* Category score tiles */}
-        {categoryEntries.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {categoryEntries.map(([key, score]) => {
-              const label =
-                CATEGORY_LABELS[key] ??
-                key.charAt(0).toUpperCase() + key.slice(1);
-              return (
-                <div
-                  key={key}
-                  className="flex flex-col gap-2 rounded-lg border border-border bg-muted/30 px-3.5 py-3"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      {label}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className={cn("text-xs", scoreColorClass(score))}
-                    >
-                      {score}%
-                    </Badge>
-                  </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all",
-                        score >= 80
-                          ? "bg-emerald-500"
-                          : score >= 65
-                            ? "bg-blue-500"
-                            : score >= 45
-                              ? "bg-amber-500"
-                              : "bg-red-500",
-                      )}
-                      style={{ width: `${score}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
       </CardContent>
     </Card>
   );

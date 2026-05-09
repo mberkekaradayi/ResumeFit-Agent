@@ -4,10 +4,6 @@
  * These ensure that even when the model returns unexpected output, we either
  * fix it up or fail loudly with a useful error — never silently pass bad data
  * to the UI.
- *
- * TODO: Replace the lightweight hand-rolled validators below with a proper Zod
- * schema once `zod` is added (`npm install zod`). Zod will give you parse
- * errors with field paths, which is very helpful during prompt tuning.
  */
 
 import type { AnalyzeResponse } from "@/types/api.types";
@@ -24,14 +20,9 @@ export function validateAnalyzeResponse(raw: unknown): AnalyzeResponse {
   const obj = raw as Record<string, unknown>;
 
   const requiredKeys: (keyof AnalyzeResponse)[] = [
-    "jobRequirements",
-    "resumeProfile",
     "matchScore",
-    "evidenceMap",
-    "gaps",
-    "rewrites",
-    "factualityWarnings",
-    "interviewPrep",
+    "summary",
+    "meta",
   ];
 
   for (const key of requiredKeys) {
@@ -40,6 +31,5 @@ export function validateAnalyzeResponse(raw: unknown): AnalyzeResponse {
     }
   }
 
-  // TODO: Add per-field deep validation once Zod is available.
   return obj as AnalyzeResponse;
 }

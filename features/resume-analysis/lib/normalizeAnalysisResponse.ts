@@ -7,49 +7,51 @@
  */
 
 import type { AnalyzeResponse } from "@/types/api.types";
-import { calculateMatchScore } from "./calculateMatchScore";
-
 /**
  * Takes a potentially partial AI response object and returns a guaranteed
- * complete `AnalyzeResponse` with a recalculated match score.
+ * complete `AnalyzeResponse` with a bounded score and concise summary.
  */
 export function normalizeAnalysisResponse(
   raw: Partial<AnalyzeResponse>
 ): AnalyzeResponse {
-  const evidenceMap = raw.evidenceMap ?? [];
-
-  // Always recalculate scores from the evidence map — never trust the raw AI score.
-  const matchScore = calculateMatchScore(evidenceMap);
+  const overall = clampScore(raw.matchScore?.overall ?? 0);
+  const label =
+    raw.matchScore?.label ??
+    (overall >= 75 ? "strong" : overall >= 50 ? "moderate" : "weak");
+  const explanation =
+    raw.matchScore?.explanation?.trim() ||
+    "Estimated alignment based on role-relevant metrics and requirement match.";
+  const summary = {
+    strongestFit: (raw.summary?.strongestFit ?? [])
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3),
+    biggestGaps: (raw.summary?.biggestGaps ?? [])
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3),
+    nextSteps: (raw.summary?.nextSteps ?? [])
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .slice(0, 3),
+  };
 
   return {
-    jobRequirements: raw.jobRequirements ?? {
-      mustHave: [],
-      niceToHave: [],
-      technologies: [],
-      responsibilities: [],
-      softSkills: [],
-      senioritySignals: [],
+    matchScore: {
+      overall,
+      label,
+      categoryScores: {},
+      explanation,
     },
-    resumeProfile: raw.resumeProfile ?? {
-      skills: [],
-      experience: [],
-      projects: [],
-      education: [],
-      technologies: [],
-      metrics: [],
-      ownershipSignals: [],
-      communicationSignals: [],
-      aiLlmSignals: [],
+    summary,
+    meta: raw.meta ?? {
+      engine: "ai",
+      warnings: [],
     },
-    matchScore,
-    evidenceMap,
-    gaps: raw.gaps ?? {
-      strongAreas: [],
-      weakAreas: [],
-      missingAreas: [],
-    },
-    rewrites: raw.rewrites ?? [],
-    factualityWarnings: raw.factualityWarnings ?? [],
-    interviewPrep: raw.interviewPrep ?? [],
   };
+}
+
+function clampScore(score: number): number {
+  if (!Number.isFinite(score)) return 0;
+  return Math.max(0, Math.min(100, Math.round(score)));
 }

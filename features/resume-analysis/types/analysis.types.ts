@@ -25,6 +25,8 @@ export type Requirement = {
   keywords: string[];
   /** Why this requirement matters for the role */
   explanation: string;
+  /** Direct supporting phrases from job description */
+  evidenceFromJobDescription?: string[];
 };
 
 export type JobRequirements = {
@@ -34,6 +36,8 @@ export type JobRequirements = {
   responsibilities: string[];
   softSkills: string[];
   senioritySignals: string[];
+  domainSignals: string[];
+  aiLlmSignals: string[];
 };
 
 // ─── Resume Profile ───────────────────────────────────────────────────────────
@@ -78,6 +82,7 @@ export type CategoryScores = {
 export type MatchScore = {
   /** 0–100 overall weighted score */
   overall: number;
+  label?: "weak" | "moderate" | "strong";
   categoryScores: CategoryScores;
   explanation: string;
 };
@@ -109,23 +114,17 @@ export type BulletRewrite = {
   factualityNotes: string[];
 };
 
-// ─── Factuality Warnings ──────────────────────────────────────────────────────
+export type AnalysisEngine = "ai" | "heuristic_fallback";
 
-export type FactualityWarning = {
-  claim: string;
-  reason: string;
-  riskLevel: RewriteRisk;
-  /** The original bullet this warning is associated with, if any */
-  relatedBullet?: string;
+export type AnalysisMeta = {
+  engine: AnalysisEngine;
+  warnings: string[];
 };
 
-// ─── Interview Prep ───────────────────────────────────────────────────────────
-
-export type InterviewQuestion = {
-  question: string;
-  whyTheyMayAsk: string;
-  relevantResumeEvidence: string[];
-  suggestedTalkingPoints: string[];
-  /** Gap area this question relates to, if applicable */
-  relatedGap?: string;
+export type AnalysisSummary = {
+  strongestFit: string[];
+  biggestGaps: string[];
+  nextSteps: string[];
 };
+
+

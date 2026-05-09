@@ -21,7 +21,7 @@ export function ResumeTextEditor({
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between">
         <Label htmlFor="resume-text">Resume text</Label>
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-zinc-300">
           {value.length} characters
         </span>
       </div>
@@ -32,12 +32,12 @@ export function ResumeTextEditor({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={14}
-        className="min-h-48 font-mono text-sm leading-relaxed"
+        className="min-h-48 font-mono text-sm leading-relaxed border-white/15 bg-zinc-950/70"
       />
 
-      <p className="text-xs text-muted-foreground">
-        Review and correct the extracted text before running analysis. The
-        quality of the analysis depends on this text.
+      <p className="text-xs text-zinc-300">
+        Focus on high-signal content: role bullets, technologies, metrics, and
+        impact. Exclude contact/header noise for faster, more reliable analysis.
       </p>
     </div>
   );

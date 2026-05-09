@@ -4,21 +4,17 @@
  * Manages the full analysis pipeline call to /api/analyze.
  *
  * Runs input validation client-side before making the request so we avoid
- * round-trips for empty inputs. The hook also saves the result to localStorage
- * so the user can refresh without losing their analysis.
+ * round-trips for empty inputs.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import type { AnalyzeResponse } from "@/types/api.types";
 import { validateAnalysisInput } from "../lib/validateAnalysisInput";
-import {
-  saveAnalysis,
-  loadAnalysis,
-} from "@/lib/storage/localAnalysisStorage";
 
 export type UseResumeAnalysisState = {
   analysis: AnalyzeResponse | null;
   isLoading: boolean;
+  loadingMessage: string;
   error: string | null;
   /** Field-level validation errors from the pre-request check */
   validationErrors: { field: string; message: string }[];
@@ -26,21 +22,23 @@ export type UseResumeAnalysisState = {
 
 export type UseResumeAnalysisActions = {
   runAnalysis: (resumeText: string, jobDescription: string) => Promise<void>;
-  /** Reload the most recently saved analysis from localStorage, if any */
-  restoreFromStorage: () => void;
+  cancelAnalysis: () => void;
   reset: () => void;
 };
 
 const initialState: UseResumeAnalysisState = {
   analysis: null,
   isLoading: false,
+  loadingMessage: "",
   error: null,
   validationErrors: [],
 };
+const ANALYZE_REQUEST_TIMEOUT_MS = 90000;
 
 export function useResumeAnalysis(): UseResumeAnalysisState &
   UseResumeAnalysisActions {
   const [state, setState] = useState<UseResumeAnalysisState>(initialState);
+  const abortRef = useRef<AbortController | null>(null);
 
   const runAnalysis = useCallback(
     async (resumeText: string, jobDescription: string) => {
@@ -57,16 +55,41 @@ export function useResumeAnalysis(): UseResumeAnalysisState &
       setState((s) => ({
         ...s,
         isLoading: true,
+        loadingMessage: "Running analysis…",
         error: null,
         validationErrors: [],
       }));
 
       try {
-        const res = await fetch("/api/analyze", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ resumeText, jobDescription }),
-        });
+        // Cancel previous in-flight analysis before starting a new one.
+        abortRef.current?.abort();
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const timeout = setTimeout(() => controller.abort(), ANALYZE_REQUEST_TIMEOUT_MS);
+        let res: Response;
+        let stageInterval: ReturnType<typeof setInterval> | undefined;
+        try {
+          const stageMessages = [
+            "Running analysis…",
+            "Scoring and mapping evidence…",
+            "Finalizing your report…",
+          ];
+          let idx = 0;
+          stageInterval = setInterval(() => {
+            idx = Math.min(idx + 1, stageMessages.length - 1);
+            setState((s) => ({ ...s, loadingMessage: stageMessages[idx] }));
+          }, 7000);
+
+          res = await fetch("/api/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ resumeText, jobDescription }),
+            signal: controller.signal,
+          });
+        } finally {
+          if (stageInterval) clearInterval(stageInterval);
+          clearTimeout(timeout);
+        }
 
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
@@ -77,29 +100,46 @@ export function useResumeAnalysis(): UseResumeAnalysisState &
 
         const analysis: AnalyzeResponse = await res.json();
 
-        // Persist to localStorage so the user can refresh without losing work
-        saveAnalysis(analysis);
-
-        setState({ analysis, isLoading: false, error: null, validationErrors: [] });
+        setState({
+          analysis,
+          isLoading: false,
+          loadingMessage: "",
+          error: null,
+          validationErrors: [],
+        });
       } catch (err) {
+        const isTimeout =
+          err instanceof DOMException && err.name === "AbortError";
+
         setState((s) => ({
           ...s,
           isLoading: false,
+          loadingMessage: "",
           error:
-            err instanceof Error
+            isTimeout
+              ? "Analysis timed out. Please retry with concise, role-focused resume and job description content."
+              : err instanceof Error
               ? err.message
               : "An unknown error occurred. Please try again.",
         }));
+      } finally {
+        abortRef.current = null;
       }
     },
     []
   );
 
-  const restoreFromStorage = useCallback(() => {
-    const stored = loadAnalysis();
-    if (stored) {
-      setState((s) => ({ ...s, analysis: stored.analysis }));
+  const cancelAnalysis = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
     }
+    setState((s) => ({
+      ...s,
+      isLoading: false,
+      loadingMessage: "",
+      error: null,
+    }));
   }, []);
 
   const reset = useCallback(() => {
@@ -109,7 +149,7 @@ export function useResumeAnalysis(): UseResumeAnalysisState &
   return {
     ...state,
     runAnalysis,
-    restoreFromStorage,
+    cancelAnalysis,
     reset,
   };
 }

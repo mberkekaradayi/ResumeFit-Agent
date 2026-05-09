@@ -7,6 +7,8 @@
 import {
   MIN_RESUME_TEXT_LENGTH,
   MIN_JOB_DESCRIPTION_LENGTH,
+  MAX_RESUME_TEXT_LENGTH,
+  MAX_JOB_DESCRIPTION_LENGTH,
 } from "../constants/analysis.constants";
 
 export type ValidationResult =
@@ -27,16 +29,23 @@ export function validateAnalysisInput(
   jobDescription: string,
 ): ValidationResult {
   const errors: ValidationError[] = [];
+  const resumeLength = resumeText.trim().length;
+  const jdLength = jobDescription.trim().length;
 
   if (!resumeText || resumeText.trim().length === 0) {
     errors.push({
       field: "resumeText",
       message: "Resume text is required.",
     });
-  } else if (resumeText.trim().length < MIN_RESUME_TEXT_LENGTH) {
+  } else if (resumeLength < MIN_RESUME_TEXT_LENGTH) {
     errors.push({
       field: "resumeText",
-      message: `Resume text is too short (${resumeText.trim().length} characters). Please paste the full resume text — at least ${MIN_RESUME_TEXT_LENGTH} characters are needed for a meaningful analysis.`,
+      message: `Resume text is too short (${resumeLength} characters). Please paste the full resume text — at least ${MIN_RESUME_TEXT_LENGTH} characters are needed for a meaningful analysis.`,
+    });
+  } else if (resumeLength > MAX_RESUME_TEXT_LENGTH) {
+    errors.push({
+      field: "resumeText",
+      message: `Resume text is too long (${resumeLength} characters). Please keep it under ${MAX_RESUME_TEXT_LENGTH} characters for reliable analysis.`,
     });
   }
 
@@ -45,10 +54,15 @@ export function validateAnalysisInput(
       field: "jobDescription",
       message: "Job description is required.",
     });
-  } else if (jobDescription.trim().length < MIN_JOB_DESCRIPTION_LENGTH) {
+  } else if (jdLength < MIN_JOB_DESCRIPTION_LENGTH) {
     errors.push({
       field: "jobDescription",
-      message: `Job description is too short (${jobDescription.trim().length} characters). Please paste the full job description — at least ${MIN_JOB_DESCRIPTION_LENGTH} characters are needed.`,
+      message: `Job description is too short (${jdLength} characters). Please paste the full job description — at least ${MIN_JOB_DESCRIPTION_LENGTH} characters are needed.`,
+    });
+  } else if (jdLength > MAX_JOB_DESCRIPTION_LENGTH) {
+    errors.push({
+      field: "jobDescription",
+      message: `Job description is too long (${jdLength} characters). Please keep it under ${MAX_JOB_DESCRIPTION_LENGTH} characters. Remove repetitive sections (benefits/company info) and keep role requirements.`,
     });
   }
 

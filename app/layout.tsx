@@ -30,14 +30,16 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "h-full antialiased",
+        "h-full antialiased dark",
         geistSans.variable,
         geistMono.variable,
         inter.variable,
         "font-sans"
       )}
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full selection:bg-emerald-500/30 selection:text-emerald-50">
+        {children}
+      </body>
     </html>
   );
 }

@@ -95,7 +95,7 @@
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
+  --muted-foreground: oklch(0.82 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
@@ -122,9 +122,26 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-medium;
+    background-image:
+      radial-gradient(circle at 20% -20%, rgba(13, 148, 136, 0.12), transparent 35%),
+      radial-gradient(circle at 80% -10%, rgba(245, 158, 11, 0.1), transparent 30%),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+    background-attachment: fixed;
+  }
+  p {
+    @apply text-zinc-200;
+  }
+  label {
+    @apply text-zinc-100 font-medium;
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  .rf-panel {
+    @apply rounded-2xl border border-white/10 bg-zinc-950/80 backdrop-blur-sm shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_20px_40px_-30px_rgba(0,0,0,0.85)];
   }
 }

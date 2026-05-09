@@ -12,6 +12,8 @@ import type {
 
 export const MIN_RESUME_TEXT_LENGTH = 200;
 export const MIN_JOB_DESCRIPTION_LENGTH = 100;
+export const MAX_RESUME_TEXT_LENGTH = 5000;
+export const MAX_JOB_DESCRIPTION_LENGTH = 4000;
 
 // ─── Evidence scoring weights ─────────────────────────────────────────────────
 

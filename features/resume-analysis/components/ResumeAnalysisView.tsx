@@ -11,33 +11,36 @@
  * AnalysisInputForm and AnalysisResults, and all logic to useResumeAnalysis.
  */
 
-import { useEffect } from "react";
 import { useResumeAnalysis } from "../hooks/useResumeAnalysis";
 import { AnalysisInputForm } from "./AnalysisInputForm";
 import { AnalysisResults } from "./AnalysisResults";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
+import { Button } from "@/components/ui/button";
 
 export function ResumeAnalysisView() {
   const {
     analysis,
     isLoading,
+    loadingMessage,
     error,
     validationErrors,
     runAnalysis,
-    restoreFromStorage,
+    cancelAnalysis,
     reset,
   } = useResumeAnalysis();
 
-  // On mount, try to restore the previous analysis from localStorage
-  useEffect(() => {
-    restoreFromStorage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   if (isLoading) {
     return (
-      <LoadingState message="Running analysis pipeline… this may take 15–30 seconds." />
+      <LoadingState
+        message={loadingMessage || "Running analysis pipeline…"}
+        subMessage="Analysis may take up to about 1 minute for longer inputs."
+        action={
+          <Button variant="outline" size="sm" onClick={cancelAnalysis}>
+            Cancel analysis
+          </Button>
+        }
+      />
     );
   }
 
@@ -48,14 +51,17 @@ export function ResumeAnalysisView() {
   return (
     <div className="space-y-6">
       {/* Page intro */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+      <div className="space-y-2">
+        <p className="text-[11px] tracking-[0.2em] uppercase text-zinc-300">
+          Analysis Workspace
+        </p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
           Resume fit analysis
         </h1>
-        <p className="text-sm text-muted-foreground max-w-xl">
-          Upload your resume and paste a job description. The AI will map your
-          experience to the role requirements and generate an evidence-based fit
-          report — without inventing anything.
+        <p className="text-sm text-zinc-200 max-w-2xl leading-relaxed">
+          Paste your resume and job description. The system estimates alignment,
+          highlights strongest fit, surfaces gaps, and recommends next steps in
+          a concise executive-style output.
         </p>
       </div>
 
