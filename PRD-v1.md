@@ -60,6 +60,9 @@ The main differentiator is:
 
 ## 5. MVP Features
 
+<img width="1474" height="1240" alt="image" src="https://github.com/user-attachments/assets/863ea857-0794-4bd5-9d0a-4a24ab80e277" />
+
+
 ### 5.1 Resume Upload
 
 Users can upload a PDF resume.
